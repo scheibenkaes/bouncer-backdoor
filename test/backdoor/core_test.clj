@@ -13,3 +13,5 @@
                (let [auth-map {:identity "foo@bar.de" :password nil :roles #{:user}}]
                  (credential-fn {:assertion "foo"}) => auth-map))
          ))
+
+;; TODO *error-fn*

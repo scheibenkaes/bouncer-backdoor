@@ -12,13 +12,17 @@
                             :form-params {:assertion nil
                                           :audience nil}})
 
+(def ^:dynamic *error-fn* (fn [error] (println error)))
+
 (defn credential-fn [{:keys [assertion audience]}]
   (when assertion
     (let [opts (-> *http-opts*
                    (update-in [:form-params] assoc :assertion assertion)
                    (update-in [:form-params] assoc :audience audience))
           {:keys [error status body]} @(http/post verify-url opts)]
-      (when (= status 200)
-        (let [{:keys [email status]} (json/parse-string body true)]
-          (when (= status "okay")
-            {:identity email :password nil :roles #{:user}}))))))
+      (if (= status 200)
+        (let [{:keys [email status reason]} (json/parse-string body true)]
+          (if (= status "okay")
+            {:identity email :password nil :roles #{:user}}
+            (*error-fn* reason)))
+        (*error-fn* error)))))
