@@ -1,7 +1,15 @@
 (ns backdoor.core-test
-  (:require [clojure.test :refer :all]
+  (:use org.httpkit.fake)
+  (:require [midje.sweet :refer :all]
             [backdoor.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(facts "credential-fn"
+       (with-fake-http [verify-url {:body "{\"status\" : \"okay\", \"email\" : \"foo@bar.de\"}" :status 200}]
+         (fact "missing assertion returns null"
+               (credential-fn nil) => nil?
+               (credential-fn {}) => nil?)
+
+         (fact "returns an authentication map on success"
+               (let [auth-map {:identity "foo@bar.de" :password nil :roles #{:user}}]
+                 (credential-fn {:assertion "foo"}) => auth-map))
+         ))
